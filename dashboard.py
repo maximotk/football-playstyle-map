@@ -71,10 +71,33 @@ if cache_key not in st.session_state:
         negative_columns=negative_columns
     )
     
-    # -- Apply Clustering
-    renaming = {f"score_cluster_{i}": f"Dimension {i}" for i in range(1, n_components_chosen + 1)}
-    team_clustering = create_clusters(soft_clusters, renaming)
 
+    NAME_PRESETS = {
+        "Unilateral": [
+            "Possession Circulation",
+            "Defensive Solidity",
+            "Chance Creation",
+            "Pressing & Verticality"
+        ],
+        "With Opponent Stats": [
+            "Controlled Possession",
+            "Opponent Control",
+            "Attacking Initiative",
+            "Set Piece & Compactness"
+        ]
+    }
+
+    component_names = NAME_PRESETS.get(data_type, [])
+    component_names = (component_names + [f"Dimension {i}" for i in range(1, n_components_chosen+1)])[:n_components_chosen]
+
+    # Renaming dictionary drives cluster naming + heatmap axes
+    renaming = {
+        f"score_cluster_{i}": component_names[i - 1]
+        for i in range(1, n_components_chosen + 1)
+    }
+
+    # -- Apply Clustering
+    team_clustering = create_clusters(soft_clusters, renaming)
     context_features_extended = context_features + ["cluster", "cluster_dominant"]
 
     # save in session_state
@@ -117,7 +140,8 @@ with tab1:
         components,
         feature_names,
         n_components=n_components_chosen,
-        n_features=10
+        n_features=10,
+        component_names=list(renaming.values())
     )
     st.pyplot(fig_compact)
 
@@ -132,7 +156,7 @@ with tab1:
     st.pyplot(fig)
 
     st.subheader("Team Playstyle Mix Overview")
-    st.write("Vertical order matters too - teams further away from each other are more different.")
+    st.write("Teams closer together have more similar style mixes.")
     fig2 = team_axes_heatmap(soft_clusters_selected, renaming)
     st.pyplot(fig2)
 

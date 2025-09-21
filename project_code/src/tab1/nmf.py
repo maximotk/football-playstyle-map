@@ -18,7 +18,8 @@ def process_components(
     components: np.ndarray,
     names: list[str],
     n_components: int = 4,
-    n_features: int = 10
+    n_features: int = 10,
+    component_names: list[str] | None = None,
 ) -> plt.Figure:
     """
     Visualize top-N features per component with compact layout.
@@ -27,6 +28,7 @@ def process_components(
     :param names: Feature names corresponding to columns in components.
     :param n_components: Number of components to display.
     :param n_features: Top features to display per component.
+    :param component_names: Playstyle dimension name.
     :return: Matplotlib figure object.
     """
     top_components = components[:n_components]
@@ -48,7 +50,12 @@ def process_components(
             .reset_index(drop=True)
             .iloc[:n_features]
         )
-        df_info["Component"] = f"Dimension {i}"
+
+        label_for_component = (
+            component_names[i-1] if component_names and i-1 < len(component_names)
+            else f"Dimension {i}"
+        )
+        df_info["Component"] = label_for_component
         comp_dfs.append(df_info)
 
     all_top = pd.concat(comp_dfs, ignore_index=True)
@@ -108,7 +115,7 @@ def process_components(
         ncol=len(cats)
     )
 
-    fig.suptitle(f"Top {n_features} Features per Dimension",
+    fig.suptitle(f"Top {n_features} Features per Playstyle Dimension",
                  fontsize=18, fontweight="bold", y=1.10)
 
     return fig
