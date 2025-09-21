@@ -1,31 +1,18 @@
-# --- Python ---
 __pycache__/
 *.py[cod]
 *.pyo
 *.so
-
-# Virtual environments
 .venv/
 venv/
 env/
-
-# Build artifacts
 *.egg-info/
 dist/
 build/
-
-# --- Jupyter ---
 .ipynb_checkpoints/
-
-# --- Testing ---
 .pytest_cache/
 .coverage
 htmlcov/
-
-# --- Editors/IDEs ---
 .vscode/
 .idea/
 .DS_Store
-
-# --- Streamlit ---
 .streamlit/

@@ -1,0 +1,11 @@
+.git
+__pycache__
+.pytest_cache
+.github
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.coverage
+coverage.xml
