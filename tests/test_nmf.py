@@ -7,7 +7,7 @@ from src.tab1 import nmf
 
 
 def make_toy_df(n_samples=15, n_features=12):
-    """helper to create a larger df to satisfy NMF constraints"""
+    """Helper to create toy dataframe with metadata and numeric features."""
     data = {
         "match_id": range(1, n_samples + 1),
         "team": [f"T{i}" for i in range(1, n_samples + 1)],
@@ -19,6 +19,7 @@ def make_toy_df(n_samples=15, n_features=12):
 
 
 def test_process_components_returns_figure():
+    """Test process_components returns a matplotlib Figure."""
     components = np.array([
         [0.2, 0.3, 0.5],
         [0.1, 0.7, 0.2]
@@ -30,6 +31,7 @@ def test_process_components_returns_figure():
 
 
 def test_get_cosine_similarity_nmf_returns_between_minus1_and1():
+    """Test get_cosine_similarity_nmf outputs value between -1 and 1."""
     arrays = [
         np.array([[1, 0], [0, 1]]),
         np.array([[0.9, 0.1], [0.2, 0.8]])
@@ -39,6 +41,7 @@ def test_get_cosine_similarity_nmf_returns_between_minus1_and1():
 
 
 def test_run_nmf_outputs_shapes():
+    """Test run_nmf returns correct outputs and shapes."""
     df = make_toy_df()  # bigger df
     soft_clusters, components, n_components_chosen, feature_names = nmf.run_nmf(
         df,

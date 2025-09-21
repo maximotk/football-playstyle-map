@@ -5,6 +5,7 @@ from src.tab1 import clustering, nmf, viz
 
 
 def make_toy_pipeline_df():
+    """Helper to create a toy dataframe for full pipeline testing."""
     return pd.DataFrame({
         "match_id": range(1, 7),
         "team": list("ABCDEF"),
@@ -16,6 +17,7 @@ def make_toy_pipeline_df():
 
 
 def test_full_pipeline_runs():
+    """Test the full pipeline: clustering → NMF → visualization runs successfully."""
     df = make_toy_pipeline_df()
 
     # Step 1: Clustering

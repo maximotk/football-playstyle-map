@@ -8,6 +8,7 @@ from src.tab1 import viz
 
 @pytest.fixture
 def toy_df():
+    """Fixture providing a toy dataframe for viz tests."""
     return pd.DataFrame({
         "match_id": [1, 2, 3, 4, 5, 6],
         "team": ["A", "B", "C", "D", "E", "F"],
@@ -19,6 +20,7 @@ def toy_df():
 
 
 def test_run_viz_returns_viz_df_and_fig(toy_df):
+    """Test run_viz with TSNE returns dataframe and matplotlib Figure."""
     viz_df, fig = viz.run_viz(
         toy_df,
         context_features=["match_id", "team", "competition"],
@@ -34,6 +36,7 @@ def test_run_viz_returns_viz_df_and_fig(toy_df):
 
 
 def test_run_viz_umap_mode(toy_df):
+    """Test run_viz with UMAP mode returns dataframe and matplotlib Figure."""
     viz_df, fig = viz.run_viz(
         toy_df,
         context_features=["match_id", "team", "competition"],
@@ -49,6 +52,7 @@ def test_run_viz_umap_mode(toy_df):
 
 
 def test_team_axes_heatmap_returns_figure(toy_df):
+    """Test team_axes_heatmap returns a matplotlib Figure."""
     name_map = {
         "score_cluster_1": "Dimension 1",
         "score_cluster_2": "Dimension 2"
