@@ -251,12 +251,16 @@ def run_nmf(
         "min_avg_feature_importance": min_weights
     })
 
-    best_k = int(
+    candidates = (
         k_choice_df
         .query("avg_cosine_similarity >= 0.85 & min_avg_feature_importance >= 0.15")
         .sort_values("reconstruction_error")
-        .iloc[0]["k"]
     )
+
+    if not candidates.empty:
+        best_k = int(candidates.iloc[0]["k"])
+    else:
+        best_k = int(k_choice_df.sort_values("reconstruction_error").iloc[0]["k"])
 
     model_chosen = NMF(
         n_components=best_k,

@@ -86,21 +86,20 @@ if cache_key not in st.session_state:
             "Set Piece & Compactness"
         ]
     }
-
+    
+    # -- Rename & apply clustering
     component_names = NAME_PRESETS.get(data_type, [])
     component_names = (component_names + [f"Dimension {i}" for i in range(1, n_components_chosen+1)])[:n_components_chosen]
 
-    # Renaming dictionary drives cluster naming + heatmap axes
     renaming = {
         f"score_cluster_{i}": component_names[i - 1]
         for i in range(1, n_components_chosen + 1)
     }
 
-    # -- Apply Clustering
     team_clustering = create_clusters(soft_clusters, renaming)
     context_features_extended = context_features + ["cluster", "cluster_dominant"]
-
-    # save in session_state
+    
+    # --- Persisting
     st.session_state[cache_key] = {
         "soft_clusters_global": soft_clusters,
         "components": components,
@@ -129,7 +128,7 @@ soft_clusters_selected = soft_clusters_global.query("competition == @competition
 team_clustering_selected= team_clustering_global.query("competition == @competition").reset_index(drop=True)
 
 
-# --- Tabs & Results
+# --- Tabs & results
 tab1, tab2 = st.tabs(["Playstyle Analysis", "Further Exploration"])
 
 with tab1:
