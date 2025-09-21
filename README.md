@@ -63,7 +63,7 @@ However, the visualizations and clustering results are displayed only for the **
 To run the full **unit tests** and check reproducibility:
 
 ```bash
-PYTHONPATH=. pytest --cov=code/src --cov-report=term-missing
+PYTHONPATH=. pytest --cov=project_code/src --cov-report=term-missing
 ```
 
 This will execute both component-level and integration tests.
