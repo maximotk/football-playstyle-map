@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.tab1 import viz
+from project_code.src.tab1 import viz
 
 
 @pytest.fixture

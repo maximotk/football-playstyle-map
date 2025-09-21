@@ -32,7 +32,8 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        PYTHONPATH=. pytest --cov=src --cov-report=xml --cov-report=term-missing
+        PYTHONPATH=. pytest --cov=project_code/src --cov-report=xml --cov-report=term-missing
+        
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4

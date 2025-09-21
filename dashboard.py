@@ -3,10 +3,10 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from src.tab1.preprocessing import *
-from src.tab1.nmf import *
-from src.tab1.viz import *
-from src.tab1.clustering import *
+from project_code.src.tab1.preprocessing import *
+from project_code.src.tab1.nmf import *
+from project_code.src.tab1.viz import *
+from project_code.src.tab1.clustering import *
 
 
 st.set_page_config(page_title="Team Playstyles", layout="wide")
@@ -33,7 +33,7 @@ data_type = st.sidebar.radio(
 )
 
 # --- Load data depending on selection
-folder = f"data/all_tournaments"
+folder = f"data/processed/all_tournaments"
 
 if data_type == "Unilateral (Team Only)":
     df = pd.read_parquet(f"{folder}/team_match_features_unilateral.parquet")

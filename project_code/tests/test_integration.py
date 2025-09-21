@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 
-from src.tab1 import clustering, nmf, viz
+from project_code.src.tab1 import clustering, nmf, viz
 
 
 def make_toy_pipeline_df():

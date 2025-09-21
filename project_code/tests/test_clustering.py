@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from src.tab1 import clustering
+from project_code.src.tab1 import clustering
 
 
 def make_toy_cluster_df():

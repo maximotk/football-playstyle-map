@@ -40,11 +40,9 @@ def shannon_entropy(series: pd.Series) -> float:
     """
     x = series.to_numpy()
     n = x.size
-    # guard degenerate cases (all same or <2 obs)
     if n < 2 or np.nanstd(x) == 0:
         return 0.0
-    bins = _n_bins_fd(series)              # <-- integer
-    # pd.cut can still error if min==max; we're guarded above
+    bins = _n_bins_fd(series)
     counts = pd.Series(pd.cut(x, bins=bins)).value_counts(dropna=False, normalize=True)
 
     probs = counts[counts > 0]

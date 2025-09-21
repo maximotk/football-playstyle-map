@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pytest
 
-from src.tab1 import utils
+from project_code.src.tab1 import utils
 
 def test_n_bins_fd_small_series():
     """Test _n_bins_fd returns at least 2 bins for small non-constant series."""

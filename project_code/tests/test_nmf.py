@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import matplotlib.figure as mpl_fig
 
-from src.tab1 import nmf
+from project_code.src.tab1 import nmf
 
 
 def make_toy_df(n_samples=15, n_features=12):

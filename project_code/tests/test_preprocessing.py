@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from src.tab1 import preprocessing
+from project_code.src.tab1 import preprocessing
 
 
 @pytest.fixture
