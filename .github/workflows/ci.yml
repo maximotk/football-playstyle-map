@@ -25,9 +25,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install pytest pytest-cov
+      timeout-minutes: 10
 
     - name: Run tests with coverage
       run: |

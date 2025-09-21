@@ -1,0 +1,12 @@
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+scikit-learn
+umap-learn
+statsbombpy
+rapidfuzz
+pytest
+pytest-cov
+streamlit
