@@ -16,7 +16,7 @@ st.title("⚽ Team Playstyle Dashboard")
 st.sidebar.header("Settings")
 
 competition = st.sidebar.selectbox(
-    "Choose Competition",
+    "Competition",
     [
         "FIFA World Cup 2022",
         "FIFA World Cup 2018",
@@ -29,13 +29,13 @@ competition = st.sidebar.selectbox(
 
 data_type = st.sidebar.radio(
     "Data Type",
-    ["Unilateral", "With Opponent Stats"]
+    ["Unilateral Team Stats", "Team + Opponent Stats"]
 )
 
 # --- Load data depending on selection
 folder = f"data/processed/all_tournaments"
 
-if data_type == "Unilateral":
+if data_type == "Unilateral Team Stats":
     df = pd.read_parquet(f"{folder}/team_match_features_unilateral.parquet")
 else:
     df = pd.read_parquet(f"{folder}/team_match_features.parquet")
@@ -73,13 +73,13 @@ if cache_key not in st.session_state:
     
 
     NAME_PRESETS = {
-        "Unilateral": [
+        "Unilateral Team Stats": [
             "Possession Circulation",
             "Defensive Solidity",
             "Chance Creation",
             "Pressing & Verticality"
         ],
-        "With Opponent Stats": [
+        "Team + Opponent Stats": [
             "Controlled Possession",
             "Opponent Control",
             "Attacking Initiative",
