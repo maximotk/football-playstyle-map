@@ -76,3 +76,25 @@ def test_process_components_single_component():
     )
 
     assert isinstance(fig, plt.Figure)
+
+
+def test_run_nmf_triggers_fallback_branch():
+    """Test run_nmf triggers the fallback when no candidate meets thresholds."""
+    df = pd.DataFrame({
+        "match_id": [1, 2, 3, 4],
+        "team": ["A", "B", "C", "D"],
+        "competition": ["X"] * 4,
+        "feat1": [1, 1, 1, 1.1],
+        "feat2": [2, 2, 2, 2.1],
+    })
+
+    soft_clusters, components, n_components_chosen, feature_names = nmf.run_nmf(
+        df,
+        context_features=["match_id", "team", "competition"],
+        negative_columns=[]
+    )
+
+    assert "match_id" in soft_clusters.columns
+    assert isinstance(components, np.ndarray)
+    assert n_components_chosen >= 2
+    assert all(isinstance(n, str) for n in feature_names)
