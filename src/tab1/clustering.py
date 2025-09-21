@@ -42,7 +42,7 @@ def rule_based_cluster(df, cluster_cols):
         df.copy()[cluster_cols]
         .assign(
             sorting=lambda x: x.apply(
-                lambda row: row.nlargest(n_clusters - 1).index.to_list(), axis=1),
+                lambda row: row.nlargest(n_clusters).index.to_list(), axis=1),
             cluster=lambda x: x.apply(
                 lambda row:
                     (

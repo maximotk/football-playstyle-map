@@ -166,12 +166,15 @@ def run_nmf(df, context_features, negative_columns):
     cosine_similarities = []
     min_weights = []
     avg_weights = []
-    for k in range(2, 11):
+    
+    max_k = min(10, min(data.shape))
+    for k in range(2, max_k + 1):
 
+        init = "nndsvda" if k <= min(data.shape) else "random"
         model = NMF(
             n_components=k,
             random_state=1,
-            init="nndsvda"
+            init=init
         )
         model.fit(data)
 

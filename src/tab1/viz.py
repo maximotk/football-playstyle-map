@@ -57,8 +57,9 @@ def run_viz(
         local_connectivity=1,
         repulsion_strength=1
     ):
-    metadata = df.copy()[context_features]
-    data = df.drop(columns=context_features)
+    cols_to_drop = list(set(context_features + [color_col]))
+    metadata = df.copy()[cols_to_drop]
+    data = df.drop(columns=cols_to_drop).select_dtypes(include=[np.number])
 
     if model == "tsne":
         tsne_model = TSNE(
