@@ -17,7 +17,7 @@ Currently, the dashboard focuses on:
 
 ---
 
-## 📦 Requirements
+## 📦 Installation & Requirements
 
 To install requirements:
 
@@ -30,6 +30,13 @@ Alternatively, build a reproducible Docker container:
 ```bash
 docker build -t football-playstyle-map .
 docker run -p 8501:8501 football-playstyle-map
+```
+
+Or pull the prebuilt image from Docker Hub:
+
+```bash
+docker pull maximotk/football-playstyle-map:latest
+docker run -d -p 8501:8501 maximotk/football-playstyle-map:latest
 ```
 
 ---
