@@ -34,6 +34,17 @@ docker run -p 8501:8501 football-playstyle-map
 
 ---
 
+## 📈 Results
+
+Applying **Non-negative Matrix Factorization (NMF)** across all tournaments revealed approximately **4 major latent playstyle dimensions**.  
+
+These dimensions capture recurring tactical patterns across teams and competitions.  
+The exact decomposition, team clustering, and match-level visualizations can be explored directly in the **Streamlit dashboard**.  
+
+⚠️ Note: These results are preliminary and part of an ongoing project. Future versions may refine the dimensionality or extend the analysis to game phases.
+
+---
+
 ## 🏋️ Training / Preprocessing
 
 This repository does not train deep models; instead, it performs:
@@ -44,19 +55,6 @@ This repository does not train deep models; instead, it performs:
 
 The preprocessing and NMF factorization are applied across **all tournaments combined** in order to learn global playstyle dimensions.  
 However, the visualizations and clustering results are displayed only for the **competition selected in the dashboard sidebar**.  
-
-You can also control whether:
-- Only **team-level features** are included (`_self` / unilateral mode).  
-- Or both team and **opponent features** are used (`_opp` mode).
-
-
-The preprocessing and factorization are fully automated in the dashboard.  
-
-If you want to re-run preprocessing manually:
-
-```bash
-python -m code.src.tab1.preprocessing
-```
 
 ---
 
@@ -74,13 +72,27 @@ This will execute both component-level and integration tests.
 
 ## 🎮 Running the Dashboard
 
+### How to Run
+
 To launch the interactive Streamlit dashboard locally:
 
 ```bash
 streamlit run dashboard.py
 ```
 
-By default the app loads **engineered StatsBomb match features** from `data/processed/`.
+By default the app loads **engineered StatsBomb match features** from `data/processed/`.  
+The preprocessing and factorization (e.g. handling missing values, scaling, NMF) are automatically applied when the dashboard first runs.
+
+Within the dashboard sidebar, you can:  
+- **Select the competition** (e.g. FIFA World Cup, UEFA Euro, Copa América, AFCON).  
+- Choose whether to include only **team-level features** (`_self` / unilateral mode),  
+  or extend with **opponent-inclusive features** (`_opp` mode).  
+
+All visualizations and clustering results are filtered to the selected tournament and feature mode.
+
+- Running **NMF** across all tournaments may take a few minutes the first time, particularly when switching from unilateral to opponent-inclusive mode.  
+- Once computed for a given mode, results of the NMF are stored in the **Streamlit session cache**, making switching between feature modes much faster.  
+- By default, **unilateral mode** (team-only features) is used.
 
 ---
 
@@ -92,7 +104,6 @@ By default the app loads **engineered StatsBomb match features** from `data/proc
 - Engineered features are stored in `data/processed/`.  
 
 ⚠️ Data generation and cleaning are still in progress. Future versions may include updated or extended features.
-
 
 ---
 
