@@ -29,28 +29,25 @@ competition = st.sidebar.selectbox(
 
 data_type = st.sidebar.radio(
     "Data Type",
-    ["Unilateral (Team Only)", "With Opponent Stats"]
+    ["Unilateral", "With Opponent Stats"]
 )
 
 # --- Load data depending on selection
 folder = f"data/processed/all_tournaments"
 
-if data_type == "Unilateral (Team Only)":
+if data_type == "Unilateral":
     df = pd.read_parquet(f"{folder}/team_match_features_unilateral.parquet")
 else:
     df = pd.read_parquet(f"{folder}/team_match_features.parquet")
 
 # --- Preprocessing workflow
-
 context_features = ["match_id", "team", "competition"]
 
-# unique cache key depending on data_type
 cache_key = f"nmf_results_{data_type}"
 
 status_placeholder = st.empty()
 if cache_key not in st.session_state:    
 
-    # Show the message inside the placeholder
     status_placeholder.write("⏳ Running preprocessing + NMF across all tournaments...")
     df_imputed = analyze_and_handle_missing_values(df, context_features=context_features, verbose=False)
     df_cleaned = analyze_and_handle_constants(
@@ -91,7 +88,6 @@ if cache_key not in st.session_state:
         "context_features": context_features_extended,
     }
 
-    # Clear the message once done
 status_placeholder.empty()
 
 results = st.session_state[cache_key]
@@ -130,7 +126,6 @@ with tab1:
         team_clustering_selected,
         context_features=context_features,
         model="tsne",
-       # perplexity=min(30, max(5, len(team_clustering_selected) // 3)),
         learning_rate=2,
         color_col="cluster_dominant"
     )

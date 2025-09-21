@@ -72,8 +72,6 @@ This will execute both component-level and integration tests.
 
 ## 🎮 Running the Dashboard
 
-### How to Run
-
 To launch the interactive Streamlit dashboard locally:
 
 ```bash
