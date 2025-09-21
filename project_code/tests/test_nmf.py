@@ -3,8 +3,6 @@ import numpy as np
 import pytest
 import matplotlib.figure as mpl_fig
 import matplotlib.pyplot as plt
-
-
 from project_code.src.tab1 import nmf
 
 

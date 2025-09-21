@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import pytest
-
 from project_code.src.tab1 import utils
 
 def test_n_bins_fd_iqr_zero_branch_many_uniques():

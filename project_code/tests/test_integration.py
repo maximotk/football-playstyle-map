@@ -1,6 +1,5 @@
 import pytest
 import pandas as pd
-
 from project_code.src.tab1 import clustering, nmf, viz
 
 

@@ -2,7 +2,6 @@ import pytest
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
 from project_code.src.tab1 import viz
 
 
