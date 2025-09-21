@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import pytest
 import matplotlib.figure as mpl_fig
+import matplotlib.pyplot as plt
+
 
 from project_code.src.tab1 import nmf
 
@@ -56,3 +58,21 @@ def test_run_nmf_outputs_shapes():
     assert isinstance(components, np.ndarray)
     assert components.shape[0] == n_components_chosen
     assert all(isinstance(n, str) for n in feature_names)
+
+
+
+def test_process_components_single_component():
+    """Test process_components works when only one component is passed."""
+    # one component with 3 features
+    components = np.array([[0.5, 0.3, 0.2]])
+    names = ["feat_a", "feat_b", "feat_c"]
+
+    fig = nmf.process_components(
+        components,
+        names,
+        n_components=1,
+        n_features=3,
+        component_names=["Custom Dimension"]
+    )
+
+    assert isinstance(fig, plt.Figure)

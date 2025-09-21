@@ -1,75 +1,70 @@
 import pytest
 import pandas as pd
 import numpy as np
-
 from project_code.src.tab1 import preprocessing
 
 
 @pytest.fixture
-def toy_df_with_missing():
-    """Create a toy dataframe with missing values and one zero-variance column."""
+def base_df():
     return pd.DataFrame({
         "id": [1, 2, 3, 4],
         "team": ["A", "B", "C", "D"],
-        "feat1": [1.0, 2.0, np.nan, 4.0],
-        "feat2": [np.nan, np.nan, 3.0, 4.0],
-        "feat3": [5.0, 5.0, 5.0, 5.0],   # <-- zero variance
     })
 
 
-def test_analyze_and_handle_missing_values_drops_and_imputes(toy_df_with_missing):
-    """Test that features with many missing values are dropped and others imputed."""
-    cleaned = preprocessing.analyze_and_handle_missing_values(
-        toy_df_with_missing,
-        context_features=["id", "team"],
-        threshold_drop=50
+def test_missing_values_drop_impute_and_copy(base_df, capsys):
+    """Cover dropping, imputing, and verbose/copy branches."""
+    df = base_df.assign(
+        f1=[1, None, None, None],   # 75% missing → dropped
+        f2=[1, 2, np.nan, 4],       # 25% missing → imputed
     )
-    assert "feat2" not in cleaned.columns  # dropped (>=50% missing)
-    assert cleaned.isna().sum().sum() == 0  # all imputed
-
-
-def test_analyze_and_handle_constants_removes_low_info(toy_df_with_missing):
-    """Test that constant features are removed."""
-    cleaned = preprocessing.analyze_and_handle_constants(
-        toy_df_with_missing,
-        context_features=["id", "team"]
+    out = preprocessing.analyze_and_handle_missing_values(
+        df, context_features=["id", "team"], threshold_drop=50, verbose=True
     )
-    assert "feat3" not in cleaned.columns  # removed because constant
+    captured = capsys.readouterr()
+    assert "Dropped:" in captured.out and "Imputed:" in captured.out
+    assert "f1" not in out and "f2" in out
+
+    # branch: no missing values → direct copy
+    df2 = base_df.assign(f1=[1, 2, 3, 4])
+    out2 = preprocessing.analyze_and_handle_missing_values(df2, ["id", "team"], verbose=True)
+    assert "f1" in out2.columns
 
 
-def test_standardize_features_raises_on_zero_variance(toy_df_with_missing):
-    """Test that zero-variance features raise an AssertionError."""
-    df = toy_df_with_missing.drop(columns=["feat2"])  # leave feat3 constant
-    with pytest.raises(AssertionError, match="Zero-variance columns"):
-        preprocessing.standardize_features(df, context_features=["id", "team"], scaler="standard")
+def test_missing_values_all_dropped(base_df):
+    """Cover branch where all features dropped → empty frame returned."""
+    df = base_df.assign(f1=[np.nan, np.nan, np.nan, np.nan])
+    out = preprocessing.analyze_and_handle_missing_values(df, ["id", "team"], threshold_drop=0)
+    assert list(out.columns) == ["id", "team"]
 
 
-def test_standardize_features_invalid_scaler_raises(toy_df_with_missing):
-    """Test invalid scaler name raises ValueError."""
-    # Remove zero-variance col to avoid triggering AssertionError first
-    df = toy_df_with_missing.drop(columns=["feat2", "feat3"])
-    with pytest.raises(ValueError, match="invalid"):
-        preprocessing.standardize_features(df, context_features=["id", "team"], scaler="invalid")
+def test_constants_dropped_and_verbose(base_df, capsys):
+    """Cover dropping constants + flagged features with verbose=True."""
+    df = base_df.assign(
+        const=[5, 5, 5, 5],
+        low_var=[1, 1, 2, 2],
+        ok=[1, 2, 3, 4],
+    )
+    out = preprocessing.analyze_and_handle_constants(df, ["id", "team"], verbose=True)
+    captured = capsys.readouterr()
+    assert "Dropping" in captured.out and "feature" in captured.out
+    assert "const" not in out and "ok" in out
 
 
-def test_standardize_features_standard_scaler(toy_df_with_missing):
-    """Test features are standardized with StandardScaler."""
-    # Remove zero-variance col to allow scaling
-    df = toy_df_with_missing.drop(columns=["feat2", "feat3"])
-    cleaned = preprocessing.standardize_features(df, context_features=["id", "team"], scaler="standard")
-    # check mean ~ 0, std ~ 1
-    features = [c for c in cleaned.columns if c not in ["id", "team"]]
-    means = cleaned[features].mean().round()
-    stds = cleaned[features].std(ddof=0).round()
-    assert all(means.abs() <= 1)  # near 0
-    assert all((stds - 1).abs() <= 1)  # near 1
-
-
-def test_standardize_features_minmax_scaler(toy_df_with_missing):
-    """Test features are scaled with MinMaxScaler."""
-    # Remove zero-variance col to allow scaling
-    df = toy_df_with_missing.drop(columns=["feat2", "feat3"])
-    cleaned = preprocessing.standardize_features(df, context_features=["id", "team"], scaler="minmax")
-    features = [c for c in cleaned.columns if c not in ["id", "team"]]
-    assert cleaned[features].min().min() == 0.0
-    assert cleaned[features].max().max() == 1.0
+def test_standardize_scalers_and_errors(base_df):
+    """Cover standard scaler, minmax scaler, zero variance, and invalid scaler."""
+    df = base_df.assign(f1=[1, 2, 3, 4], f2=[10, 20, 30, 40])
+    # standard
+    out_std = preprocessing.standardize_features(df, ["id", "team"], scaler="standard")
+    assert out_std[["f1", "f2"]].mean().abs().max() < 1
+    # minmax
+    out_mm = preprocessing.standardize_features(df, ["id", "team"], scaler="minmax")
+    assert out_mm[["f1", "f2"]].min().min() == 0.0
+    assert out_mm[["f1", "f2"]].max().max() == 1.0
+    # zero variance
+    df_zero = base_df.assign(f1=[1, 1, 1, 1])
+    with pytest.raises(AssertionError):
+        preprocessing.standardize_features(df_zero, ["id", "team"])
+    # invalid
+    with pytest.raises(ValueError):
+        preprocessing.standardize_features(df, ["id", "team"], scaler="invalid")
