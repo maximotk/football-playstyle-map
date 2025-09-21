@@ -1,46 +1,33 @@
 import pandas as pd
-from statsbombpy import sb
-import pickle
 import numpy as np
 import math
-from scipy.stats import entropy
 import warnings
 from collections import defaultdict
-import os
-from rapidfuzz import fuzz, process
-import sys
-warnings.filterwarnings("ignore")
-import re
-
 import matplotlib.pyplot as plt
 import seaborn as sns
-import math, textwrap
-from matplotlib.ticker import PercentFormatter
-
-from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import IterativeImputer
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.linear_model import BayesianRidge
-from sklearn.decomposition import PCA, NMF
-from sklearn.mixture import GaussianMixture
-from sklearn.model_selection import GridSearchCV
-from pandas.api.types import is_numeric_dtype
-from matplotlib.gridspec import GridSpec
-
-from sklearn.pipeline import Pipeline
+import math
+import textwrap
+from sklearn.decomposition import NMF
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.optimize import linear_sum_assignment
-
-from sklearn.manifold import TSNE
-import matplotlib.patheffects as pe
-from umap import UMAP
+warnings.filterwarnings("ignore")
 
 
-def process_components(components, names, n_components=4, n_features=10):
+
+def process_components(
+    components: np.ndarray,
+    names: list[str],
+    n_components: int = 4,
+    n_features: int = 10
+) -> plt.Figure:
     """
-    Compact visualization of top-N features per component.
-    - Category-based color coding (with horizontal legend).
-    - Subplots more compact, labels wrapped tighter.
+    Visualize top-N features per component with compact layout.
+
+    :param components: NMF components array (shape [n_components, n_features]).
+    :param names: Feature names corresponding to columns in components.
+    :param n_components: Number of components to display.
+    :param n_features: Top features to display per component.
+    :return: Matplotlib figure object.
     """
     top_components = components[:n_components]
 
@@ -66,16 +53,14 @@ def process_components(components, names, n_components=4, n_features=10):
 
     all_top = pd.concat(comp_dfs, ignore_index=True)
 
-    # --- Color palette for categories
     cats = all_top["Category"].astype(str).unique().tolist()
     base = sns.color_palette("tab20", n_colors=20)
     cat2color = {c: base[j % len(base)] for j, c in enumerate(cats)}
 
-    # --- Layout (reduce spacing between subplots)
     cols = n_components
     fig, axes = plt.subplots(
         1, cols, figsize=(4.8 * cols, 6), dpi=150,
-        gridspec_kw={"wspace": 0.2}  # tighter spacing
+        gridspec_kw={"wspace": 0.2}
     )
     if cols == 1:
         axes = [axes]
@@ -97,7 +82,6 @@ def process_components(components, names, n_components=4, n_features=10):
             )
             ax.add_patch(rect)
 
-            # Wrap text more aggressively (so labels fit)
             label = textwrap.fill(str(r["Feature"]), width=15)
             ax.text(
                 rcol + 0.5, nrows - 1 - rrow + 0.5, label,
@@ -110,7 +94,6 @@ def process_components(components, names, n_components=4, n_features=10):
         ax.set_xticks([]); ax.set_yticks([])
         ax.set_title(comp, fontsize=13, fontweight="bold")
 
-    # --- Horizontal legend
     handles = [
         plt.Line2D([0], [0], marker="s", linestyle="", markersize=10,
                    markerfacecolor=cat2color[c], label=c)
@@ -131,8 +114,13 @@ def process_components(components, names, n_components=4, n_features=10):
     return fig
 
 
-def get_cosine_similarity_nmf(input_list):
+def get_cosine_similarity_nmf(input_list: list[np.ndarray]) -> float:
+    """
+    Compute mean cosine similarity across NMF components from bootstraps.
 
+    :param input_list: List of NMF component matrices from multiple runs.
+    :return: Mean cosine similarity across components.
+    """
     n_components = input_list[0].shape[0]
     
     comp_dict = defaultdict(list)
@@ -155,7 +143,26 @@ def get_cosine_similarity_nmf(input_list):
     return global_mean
 
 
-def run_nmf(df, context_features, negative_columns):
+def run_nmf(
+    df: pd.DataFrame,
+    context_features: list[str],
+    negative_columns: list[str]
+) -> tuple[pd.DataFrame, np.ndarray, int, list[str]]:
+    """
+    Run NMF with model selection based on stability and feature importance.
+
+    Selects the best rank (k) based on reconstruction error, cosine similarity
+    across bootstraps, and minimum average feature weight.
+
+    :param df: Input dataframe.
+    :param context_features: Columns excluded from factorization.
+    :param negative_columns: Columns to exclude (non-negative requirement).
+    :return: Tuple of
+        - soft_clusters: DataFrame with cluster memberships,
+        - components: learned component matrix,
+        - n_components: number of components chosen,
+        - feature_names: names of input features.
+    """
     metadata = df.copy()[context_features]
     data = df.drop(columns=context_features + negative_columns)
     feature_names = data.columns.to_list()

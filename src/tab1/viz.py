@@ -1,62 +1,59 @@
 import pandas as pd
-from statsbombpy import sb
-import pickle
 import numpy as np
-import math
-from scipy.stats import entropy
 import warnings
-from collections import defaultdict
-import os
-from rapidfuzz import fuzz, process
-import sys
-warnings.filterwarnings("ignore")
-import re
-
 import matplotlib.pyplot as plt
 import seaborn as sns
-import math, textwrap
-from matplotlib.ticker import PercentFormatter
-
-from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import IterativeImputer
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.linear_model import BayesianRidge
-from sklearn.decomposition import PCA, NMF
-from sklearn.mixture import GaussianMixture
-from sklearn.model_selection import GridSearchCV
-from pandas.api.types import is_numeric_dtype
-from matplotlib.gridspec import GridSpec
-
-from sklearn.pipeline import Pipeline
 from sklearn.metrics.pairwise import cosine_similarity
-
 from sklearn.manifold import TSNE
 import matplotlib.patheffects as pe
 from umap import UMAP
-
-from .utils import *
+warnings.filterwarnings("ignore")
 
 def run_viz(
-        df,
-        context_features,
-        color_col="cluster_dominant",
-        model="tsne",
-        n_components=2,
-        metric="euclidean",
-        learning_rate=1,
-        init="pca",
-        random_state=1,
-        perplexity=30,
-        max_iter=2000,
-        early_exaggeration=12,
-        method="exact",
-        n_neighbors=15,
-        min_dist=0.25,
-        n_epochs=2000,
-        set_op_mix_ratio=1,
-        local_connectivity=1,
-        repulsion_strength=1
-    ):
+        df: pd.DataFrame,
+        context_features: list[str],
+        color_col: str = "cluster_dominant",
+        model: str = "tsne",
+        n_components: int = 2,
+        metric: str = "euclidean",
+        learning_rate: float = 1,
+        init: str = "pca",
+        random_state: int = 1,
+        perplexity: int = 30,
+        max_iter: int = 2000,
+        early_exaggeration: float = 12,
+        method: str = "exact",
+        n_neighbors: int = 15,
+        min_dist: float = 0.25,
+        n_epochs: int = 2000,
+        set_op_mix_ratio: float = 1,
+        local_connectivity: int = 1,
+        repulsion_strength: float = 1
+    ) -> tuple[pd.DataFrame, plt.Figure]:
+    """
+    Run dimensionality reduction (t-SNE or UMAP) and visualize teams.
+
+    :param df: Input dataframe with numeric features and metadata.
+    :param context_features: Columns to keep as metadata (e.g., IDs, team names).
+    :param color_col: Column used for coloring points in the scatter plot.
+    :param model: Dimensionality reduction algorithm ("tsne" or "umap").
+    :param n_components: Target dimensionality (usually 2 for visualization).
+    :param metric: Distance metric for t-SNE.
+    :param learning_rate: Learning rate for t-SNE.
+    :param init: Initialization method for t-SNE.
+    :param random_state: Random seed for reproducibility.
+    :param perplexity: Perplexity parameter for t-SNE.
+    :param max_iter: Maximum number of iterations for t-SNE.
+    :param early_exaggeration: Early exaggeration factor for t-SNE.
+    :param method: Optimization method for t-SNE ("exact" or "barnes_hut").
+    :param n_neighbors: Number of neighbors for UMAP.
+    :param min_dist: Minimum distance between embedded points for UMAP.
+    :param n_epochs: Number of training epochs for UMAP.
+    :param set_op_mix_ratio: Balance between local and global structure in UMAP.
+    :param local_connectivity: Local connectivity for UMAP.
+    :param repulsion_strength: Repulsion strength in UMAP layout.
+    :return: Tuple of (dataframe with reduced coordinates, matplotlib figure).
+    """
     cols_to_drop = list(set(context_features + [color_col]))
     metadata = df.copy()[cols_to_drop]
     data = df.drop(columns=cols_to_drop).select_dtypes(include=[np.number])
@@ -90,11 +87,9 @@ def run_viz(
         umap_data = pd.DataFrame(umap_model.fit_transform(data), columns=["X", "Y"])
         viz_df = pd.concat([metadata, umap_data], axis=1)
 
-    # unique cluster labels
     unique_vals = viz_df[color_col].unique()
     palette = sns.color_palette("tab10", n_colors=len(unique_vals))
 
-    # assign Mixed to grey if it exists
     color_map = {val: palette[i] for i, val in enumerate(unique_vals)}
     if "Mixed" in color_map:
         color_map["Mixed"] = (0.6, 0.6, 0.6)
@@ -140,19 +135,31 @@ def run_viz(
 
 
 def team_axes_heatmap(
-    df,
-    name_map,
-    figsize=(7, None),
-    cmap="magma_r",        # reversed so dark = high intensity
-    annot=False,
-    max_height=10,
-):
+    df: pd.DataFrame,
+    name_map: dict[str, str],
+    figsize: tuple[int, float | None] = (7, None),
+    cmap: str = "magma_r",
+    annot: bool = False,
+    max_height: int = 10,
+) -> plt.Figure:
+    """
+    Plot a heatmap of average playstyle dimensions for each team.
+
+    Uses spectral seriation to order teams for better visualization.
+
+    :param df: Input dataframe containing team-level data.
+    :param name_map: Mapping of original feature names to display names.
+    :param figsize: Width and height of the figure (height auto-scales if None).
+    :param cmap: Colormap used for the heatmap.
+    :param annot: Whether to annotate heatmap cells with values.
+    :param max_height: Maximum figure height (prevents oversized plots).
+    :return: Matplotlib figure containing the heatmap.
+    """
     cols_in  = list(name_map.keys())
     cols_out = list(name_map.values())
     tmp = df[['team'] + cols_in].copy().rename(columns=name_map)
     X = tmp.groupby('team', as_index=True)[cols_out].mean()
 
-    # spectral seriation
     Xn = X / np.linalg.norm(X, axis=1, keepdims=True).clip(min=1e-12)
     A = cosine_similarity(Xn)
     d = A.sum(axis=1)
@@ -163,26 +170,22 @@ def team_axes_heatmap(
 
     Xo = X.iloc[row_order]
 
-    # figure height scaling
     n_rows = len(Xo)
     height = min(max_height, 0.3 * n_rows + 2.5)
 
     fig, ax = plt.subplots(figsize=(figsize[0], height))
 
-    # heatmap with smaller colorbar
     sns.heatmap(
         Xo, cmap=cmap, annot=annot,
         cbar_kws={'label': 'Intensity', 'shrink': 0.4, 'aspect': 15},
         ax=ax
     )
 
-        # after sns.heatmap(...)
     cbar = ax.collections[0].colorbar
-    cbar.ax.set_ylabel("Intensity", fontsize=10)   # smaller label font
-    cbar.ax.tick_params(labelsize=8)              # smaller tick labels too
+    cbar.ax.set_ylabel("Intensity", fontsize=10)   
+    cbar.ax.tick_params(labelsize=8)             
 
 
-    # axis labels and ticks
     ax.set_title("Team Playstyle Dimension Mix", fontsize=11, fontweight="bold", pad=12)
     ax.set_xlabel("")
     ax.set_ylabel("Team", fontsize=9)

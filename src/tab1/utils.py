@@ -2,8 +2,15 @@ import pandas as pd
 import numpy as np
 
 
-def _n_bins_fd(series):
-    """Number of bins using Freedman–Diaconis rule, with fallbacks."""
+def _n_bins_fd(series: pd.Series) -> int:
+    """
+    Compute the number of bins using the Freedman–Diaconis rule.
+
+    Falls back to alternative rules for small sample sizes or low-variance data.
+
+    :param series: Input numeric series.
+    :return: Number of bins (at least 2).
+    """
     x = series.dropna().to_numpy()
     n = x.size
     if n < 2:
@@ -21,8 +28,16 @@ def _n_bins_fd(series):
     return max(2, bins)
 
 
-def shannon_entropy(series):
-    """Compute Shannon entropy for numeric series by binning."""
+def shannon_entropy(series: pd.Series) -> float:
+    """
+    Compute Shannon entropy for a numeric series.
+
+    The series is binned using the Freedman–Diaconis rule, and entropy is
+    calculated from the normalized bin counts.
+
+    :param series: Input numeric series.
+    :return: Shannon entropy value.
+    """
     x = series.to_numpy()
     n = x.size
     # guard degenerate cases (all same or <2 obs)
@@ -35,8 +50,16 @@ def shannon_entropy(series):
     probs = counts[counts > 0]
     return float(-(probs * np.log2(probs)).sum())
 
-def gini_impurity(series):
-    """Compute Gini impurity for numeric series by binning."""
+def gini_impurity(series: pd.Series) -> float:
+    """
+    Compute Gini impurity for a numeric series.
+
+    The series is binned using the Freedman–Diaconis rule, and impurity is
+    calculated from the normalized bin counts.
+
+    :param series: Input numeric series.
+    :return: Gini impurity value.
+    """
     x = series.to_numpy()
     n = x.size
     if n < 2 or np.nanstd(x) == 0:

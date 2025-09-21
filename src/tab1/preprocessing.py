@@ -1,52 +1,34 @@
 import pandas as pd
-from statsbombpy import sb
-import pickle
 import numpy as np
-import math
-from scipy.stats import entropy
 import warnings
-from collections import defaultdict
-import os
-from rapidfuzz import fuzz, process
-import sys
-warnings.filterwarnings("ignore")
-import re
-
-import matplotlib.pyplot as plt
-import seaborn as sns
-import math, textwrap
-from matplotlib.ticker import PercentFormatter
-
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.linear_model import BayesianRidge
-from sklearn.decomposition import PCA, NMF
-from sklearn.mixture import GaussianMixture
-from sklearn.model_selection import GridSearchCV
 from pandas.api.types import is_numeric_dtype
-from matplotlib.gridspec import GridSpec
-
-from sklearn.pipeline import Pipeline
-from sklearn.metrics.pairwise import cosine_similarity
-
-from sklearn.manifold import TSNE
-import matplotlib.patheffects as pe
-from umap import UMAP
-
 from .utils import *
+warnings.filterwarnings("ignore")
 
 
 
+def analyze_and_handle_missing_values(
+    df: pd.DataFrame,
+    context_features: list[str],
+    threshold_drop: float = 30,
+    verbose: bool = False
+) -> pd.DataFrame:
+    """
+    Handle missing values by dropping or imputing features.
 
+    Features with more than `threshold_drop` percent missing values are dropped.
+    Remaining missing values are imputed using a BayesianRidge iterative imputer.
 
-
-
-
-
-def analyze_and_handle_missing_values(df, context_features, threshold_drop=30,  verbose=False):
-    
-
+    :param df: Input dataframe.
+    :param context_features: Columns to exclude from missing value handling.
+    :param threshold_drop: Percent threshold above which features are dropped.
+    :param verbose: Whether to print details of dropped and imputed features.
+    :return: Dataframe with missing values handled.
+    """
     metadata = df.copy()[context_features]
     assert metadata.isna().sum().sum() == 0, "Metadata contains missing values."
 
@@ -95,7 +77,7 @@ def analyze_and_handle_missing_values(df, context_features, threshold_drop=30,  
         br = BayesianRidge(tol=1e-3)
         imputer = IterativeImputer(
             estimator=br,
-            max_iter=5,                 # try 5 first; bump to 10 if needed
+            max_iter=5,
             imputation_order="ascending",
             initial_strategy="median",
             n_nearest_features=min(50, max(1, df_to_clean.shape[1] - 1)),
@@ -123,16 +105,32 @@ def analyze_and_handle_missing_values(df, context_features, threshold_drop=30,  
 
 
 def analyze_and_handle_constants(
-    df,
-    context_features,
-    eps_mean=1e-8,           # prevent div-by-zero in CV
-    std_thresh=1e-12,        # auto-drop if std <= this
-    cv_thresh=0.01,          # flag if CV <= this (conservative)
-    entropy_thresh=0.1,      # bits; flag if entropy <= this
-    gini_thresh=0.02,        # flag if gini <= this
-    verbose=False
-):
+    df: pd.DataFrame,
+    context_features: list[str],
+    eps_mean: float = 1e-8,
+    std_thresh: float = 1e-12,
+    cv_thresh: float = 0.01,
+    entropy_thresh: float = 0.1,
+    gini_thresh: float = 0.02,
+    verbose: bool = False
+) -> pd.DataFrame:
+    """
+    Remove constant or low-information features.
 
+    Flags features based on low standard deviation, coefficient of variation (CV),
+    entropy, or Gini impurity. Drops constants and features flagged on multiple
+    criteria.
+
+    :param df: Input dataframe.
+    :param context_features: Columns to exclude from checks.
+    :param eps_mean: Small constant to avoid division by zero in CV.
+    :param std_thresh: Threshold for standard deviation to mark constants.
+    :param cv_thresh: Threshold for CV to flag low-variance features.
+    :param entropy_thresh: Threshold for Shannon entropy to flag features.
+    :param gini_thresh: Threshold for Gini impurity to flag features.
+    :param verbose: Whether to print details of dropped features.
+    :return: Dataframe with constant/low-info features removed.
+    """
     metadata = df.copy()[context_features]
     df_to_clean = df.drop(columns=context_features).copy()
     assert all(is_numeric_dtype(df_to_clean[c]) for c in df_to_clean.columns), \
@@ -175,16 +173,11 @@ def analyze_and_handle_constants(
     if verbose:
         print(report)
 
-
-    # drop constants
     if dropped_constants:
         df_to_clean.drop(columns=dropped_constants, inplace=True)
         if verbose:
              print(f"Dropping {len(dropped_constants)} features: {dropped_constants} - constant features.")
 
-
-    
-    # drop flags
     flagged_features = (
         report
         .query("is_constant == False")
@@ -203,8 +196,21 @@ def analyze_and_handle_constants(
 
 
 
-def standardize_features(df, context_features, verbose=False, scaler="standard"):    
+def standardize_features(
+    df: pd.DataFrame,
+    context_features: list[str],
+    verbose: bool = False,
+    scaler: str = "standard"
+) -> pd.DataFrame:
+    """
+    Standardize numeric features with zero-mean/unit-variance or min-max scaling.
 
+    :param df: Input dataframe.
+    :param context_features: Columns to exclude from scaling.
+    :param verbose: Whether to print scaling details.
+    :param scaler: Scaling method ('standard' or 'minmax').
+    :return: Dataframe with scaled features.
+    """
     metadata = df[context_features].copy()
     df_to_clean = df[[c for c in df.columns if c not in context_features]].copy()
     assert all(is_numeric_dtype(df_to_clean[c]) for c in df_to_clean.columns), \

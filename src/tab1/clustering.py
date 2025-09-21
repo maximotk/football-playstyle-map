@@ -1,41 +1,17 @@
 import pandas as pd
-from statsbombpy import sb
-import pickle
-import numpy as np
-import math
-from scipy.stats import entropy
-import warnings
-from collections import defaultdict
-import os
-from rapidfuzz import fuzz, process
-import sys
-warnings.filterwarnings("ignore")
-import re
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import math, textwrap
-from matplotlib.ticker import PercentFormatter
+def rule_based_cluster(df: pd.DataFrame, cluster_cols: list[str]) -> pd.DataFrame:
+    """
+    Assign clusters to players using a rule-based approach.
 
-from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import IterativeImputer
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.linear_model import BayesianRidge
-from sklearn.decomposition import PCA, NMF
-from sklearn.mixture import GaussianMixture
-from sklearn.model_selection import GridSearchCV
-from pandas.api.types import is_numeric_dtype
-from matplotlib.gridspec import GridSpec
+    The function selects the dominant and secondary features from the given
+    cluster columns and applies thresholds to decide whether a player belongs
+    to a single cluster, a mixed cluster, or a combination of two clusters.
 
-from sklearn.pipeline import Pipeline
-from sklearn.metrics.pairwise import cosine_similarity
-
-from sklearn.manifold import TSNE
-import matplotlib.patheffects as pe
-from umap import UMAP
-
-
-def rule_based_cluster(df, cluster_cols):
+    :param df: Input dataframe with cluster feature columns.
+    :param cluster_cols: Names of the columns used for clustering.
+    :return: Dataframe with added 'cluster_dominant' and 'cluster' columns.
+    """
     n_clusters = len(cluster_cols)
 
     computation = (
@@ -58,7 +34,17 @@ def rule_based_cluster(df, cluster_cols):
 
     return computation[["cluster_dominant", "cluster"]]
 
-def create_clusters(df, name_map):
+def create_clusters(df: pd.DataFrame, name_map: dict[str, str]) -> pd.DataFrame:
+    """
+    Create cluster assignments from a dataframe using a mapping of column names.
+
+    The function renames the dataframe columns according to the provided mapping
+    and applies rule-based clustering to determine dominant and mixed clusters.
+
+    :param df: Input dataframe with original feature columns.
+    :param name_map: Mapping of original column names to standardized cluster names.
+    :return: Dataframe with added 'cluster_dominant' and 'cluster' columns.
+    """
 
     output = df.copy()
     output.rename(columns=name_map, inplace=True)
